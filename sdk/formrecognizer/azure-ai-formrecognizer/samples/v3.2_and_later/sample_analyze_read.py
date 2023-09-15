@@ -1,28 +1,21 @@
-# coding: utf-8
-
-# -------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for
-# license information.
-# --------------------------------------------------------------------------
-
 """
-FILE: sample_analyze_read.py
+This code sample shows Prebuilt Read operations with the Azure Form Recognizer client library.
+The async versions of the samples require Python 3.6 or later.
 
-DESCRIPTION:
-    This sample demonstrates how to extract document information using "prebuilt-read"
-    to analyze a given file.
-
-USAGE:
-    python sample_analyze_read.py
-
-    Set the environment variables with your own values before running the sample:
-    1) AZURE_FORM_RECOGNIZER_ENDPOINT - the endpoint to your Form Recognizer resource.
-    2) AZURE_FORM_RECOGNIZER_KEY - your Form Recognizer API key
+To learn more, please visit the documentation - Quickstart: Form Recognizer Python client library SDKs
+https://docs.microsoft.com/en-us/azure/applied-ai-services/form-recognizer/quickstarts/try-v3-python-sdk
 """
 
-import os
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.formrecognizer import DocumentAnalysisClient
 
+"""
+Remember to remove the key from your code when you're done, and never post it publicly. For production, use
+secure methods to store and access your credentials. For more information, see 
+https://docs.microsoft.com/en-us/azure/cognitive-services/cognitive-services-security?tabs=command-line%2Ccsharp#environment-variables-and-application-configuration
+"""
+endpoint = "YOUR_FORM_RECOGNIZER_ENDPOINT"
+key = "YOUR_FORM_RECOGNIZER_KEY"
 
 def format_bounding_region(bounding_regions):
     if not bounding_regions:
@@ -40,28 +33,15 @@ def format_polygon(polygon):
 
 
 def analyze_read():
-    path_to_sample_documents = os.path.abspath(
-        os.path.join(
-            os.path.abspath(__file__),
-            "..",
-            "..",
-            "./sample_forms/forms/Form_1.jpg",
-        )
-    )
-
-    from azure.core.credentials import AzureKeyCredential
-    from azure.ai.formrecognizer import DocumentAnalysisClient, AnalysisFeature
-
-    endpoint = os.environ["AZURE_FORM_RECOGNIZER_ENDPOINT"]
-    key = os.environ["AZURE_FORM_RECOGNIZER_KEY"]
+    # sample document
+    formUrl = "https://raw.githubusercontent.com/Azure-Samples/cognitive-services-REST-api-samples/master/curl/form-recognizer/sample-layout.pdf"
 
     document_analysis_client = DocumentAnalysisClient(
         endpoint=endpoint, credential=AzureKeyCredential(key)
     )
-    with open(path_to_sample_documents, "rb") as f:
-        poller = document_analysis_client.begin_analyze_document(
-            "prebuilt-read", document=f, features=[AnalysisFeature.STYLE_FONT]
-        )
+
+    poller = document_analysis_client.begin_analyze_document_from_url(
+        "prebuilt-read", formUrl)
     result = poller.result()
 
     print("----Languages detected in the document----")
@@ -118,6 +98,7 @@ def analyze_read():
                 f"'{format_polygon(selection_mark.polygon)}' and has a confidence of {selection_mark.confidence}"
             )
 
+
     if len(result.paragraphs) > 0:
         print(f"----Detected #{len(result.paragraphs)} paragraphs in the document----")
         for paragraph in result.paragraphs:
@@ -125,6 +106,18 @@ def analyze_read():
                 f"Found paragraph with role: '{paragraph.role}' within {format_bounding_region(paragraph.bounding_regions)} bounding region"
             )
             print(f"...with content: '{paragraph.content}'")
+
+    print("----Barcode detected in the document----")
+    for page in result.pages:
+        for barcode in page.barcodes:
+            print(f"Barcode value: '{barcode.value}' with confidence {barcode.confidence}")
+
+    print("----Formulas detected in the document----")
+    for page in result.pages:
+        if page.formulas:
+            print(f"----Formulas on page #{page.page_number}----")
+            for formula in page.formulas:
+                print(f"Formula '{formula}'")
 
     print("----------------------------------------")
 
@@ -154,3 +147,4 @@ if __name__ == "__main__":
             print(f"Uh-oh! Seems there was an invalid request: {error}")
         # Raise the error again
         raise
+
