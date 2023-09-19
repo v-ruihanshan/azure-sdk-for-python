@@ -7,14 +7,13 @@ The async versions of the samples require Python 3.6 or later.
         poller = document_analysis_client.begin_analyze_document(
             "prebuilt-read", document=f,
             features=
-            [AnalysisFeature.STYLE_FONT],
-            [AnalysisFeature.FORMULAS],
-            [AnalysisFeature.BARCODES],
-            [AnalysisFeature.OCR_HIGH_RESOLUTION],
-            [AnalysisFeature.LANGUAGES]
+            [AnalysisFeature.STYLE_FONT,
+             AnalysisFeature.FORMULAS,
+             AnalysisFeature.BARCODES,
+             AnalysisFeature.OCR_HIGH_RESOLUTION,
+             AnalysisFeature.LANGUAGES]
         )
     result = poller.result()
-
 
     print("----Barcode detected in the document----")
     for page in result.pages:
